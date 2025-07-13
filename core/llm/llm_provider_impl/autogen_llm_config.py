@@ -1,4 +1,4 @@
-from Embark.core.exception.llm_config_exception import InvalidLLMProviderError
+from core.exception.llm_config_exception import InvalidLLMProviderError
 from core.llm.llm_provider import LLMProvider
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.models.anthropic import AnthropicChatCompletionClient

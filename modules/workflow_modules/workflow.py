@@ -3,23 +3,23 @@ from typing import List, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
 class LLM(BaseModel):
-    model: str = Field(..., description="Name of the language model")
-    provider: str = Field(..., description="Provider of the LLM, e.g., OpenAI, Anthropic")
-    top_probability: float = Field(..., ge=0.0, le=1.0, description="Top probability sampling value")
-    temperature: float = Field(..., ge=0.0, le=2.0, description="Sampling temperature")
-    max_tokens: int = Field(..., gt=0, description="Maximum number of tokens to generate")
+    model: str = Field(..., json_schema_extra={"description": "Name of the language model"})
+    provider: str = Field(..., json_schema_extra={"description": "Provider of the LLM, e.g., OpenAI, Anthropic"})
+    top_probability: float = Field(..., ge=0.0, le=1.0, json_schema_extra={"description": "Top probability sampling value"})
+    temperature: float = Field(..., ge=0.0, le=2.0, json_schema_extra={"description": "Sampling temperature"})
+    max_tokens: int = Field(..., gt=0, json_schema_extra={"description": "Maximum number of tokens to generate"})
 
 class Stdio(BaseModel):
-    command: str = Field(..., description="Shell or script command to execute")
-    arguments: List[str] = Field(..., description="List of arguments passed to the command")
+    command: str = Field(..., json_schema_extra={"description": "Shell or script command to execute"})
+    arguments: List[str] = Field(..., json_schema_extra={"description": "List of arguments passed to the command"})
 
 class Sse(BaseModel):
-    connection_url: str = Field(..., description="URL for SSE (Server-Sent Events) connection")
-    bearer_token: str = Field(..., description="Bearer token for sse server authentication")
+    connection_url: str = Field(..., json_schema_extra={"description": "URL for SSE (Server-Sent Events) connection"})
+    bearer_token: str = Field(..., json_schema_extra={"description": "Bearer token for sse server authentication"})
 
 class Tool(BaseModel):
-    name: str = Field(..., description="Name of the tool")
-    connection: Union[Stdio, Sse] = Field(..., description="Tool connection method")
+    name: str = Field(..., json_schema_extra={"description": "Name of the tool"})
+    connection: Union[Stdio, Sse] = Field(..., json_schema_extra={"description": "Tool connection method"})
 
 class AgentFrameworks(str, Enum):
     AUTOGEN = "autogen"
@@ -35,28 +35,28 @@ class ExecutionTypeCrewAI(str, Enum):
     SEQUENTIAL = "sequential"
 
 class Agent(BaseModel):
-    name: str = Field(..., description="Name of the agent")
-    goal: str = Field(..., description="Primary goal of the agent")
-    detailed_prompt: str = Field(..., description="Prompt template or instructions for the agent")
-    agent_responsibility: str = Field(..., description="Specific responsibilities assigned to the agent")
-    expected_output: str = Field(..., description="Expected output format or structure")
-    stream_output: bool = Field(..., description="Enable if the agent conversation need to be streamed")
+    name: str = Field(..., json_schema_extra={"description": "Name of the agent"})
+    goal: str = Field(..., json_schema_extra={"description": "Primary goal of the agent"})
+    detailed_prompt: str = Field(..., json_schema_extra={"description": "Prompt template or instructions for the agent"})
+    agent_responsibility: str = Field(..., json_schema_extra={"description": "Specific responsibilities assigned to the agent"})
+    expected_output: str = Field(..., json_schema_extra={"description": "Expected output format or structure"})
+    stream_output: bool = Field(..., json_schema_extra={"description": "Enable if the agent conversation need to be streamed"})
     tools: Optional[List[Tool]]
     llm: LLM
 
 class Workflow(BaseModel):
-    name: str = Field(..., description="Name of the workflow")
-    description: str = Field(..., description="Detailed description of the workflow")
-    agents: List[Agent] = Field(..., description="List of agents participating in the workflow")
-    agent_execution_framework: AgentFrameworks = Field(..., description="Framework used to run the agents")
-    execution_type: str = Field(None, description="Execution strategy depending on the framework")
+    name: str = Field(..., json_schema_extra={"description": "Name of the workflow"})
+    description: str = Field(..., json_schema_extra={"description": "Detailed description of the workflow"})
+    agents: List[Agent] = Field(..., json_schema_extra={"description": "List of agents participating in the workflow"})
+    agent_execution_framework: AgentFrameworks = Field(..., json_schema_extra={"description": "Framework used to run the agents"})
+    execution_type: str = Field(None, json_schema_extra={"description": "Execution strategy depending on the framework"})
     reflection_additional_instruction: Optional[str]
     reflection_llm_config: LLM
 
-    @model_validator
-    def validate_execution_type(cls, values):
-        framework = values.get("agent_execution_framework")
-        execution_type = values.get("execution_type")
+    @model_validator(mode='after')
+    def validate_execution_type(self):
+        framework = self.agent_execution_framework
+        execution_type = self.execution_type
 
         # Normalize to enum string values
         if isinstance(framework, AgentFrameworks):
@@ -78,4 +78,4 @@ class Workflow(BaseModel):
                 f"Valid types: {sorted(valid_types)}"
             )
 
-        return values
+        return self

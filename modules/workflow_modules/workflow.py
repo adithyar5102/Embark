@@ -40,6 +40,7 @@ class Agent(BaseModel):
     detailed_prompt: str = Field(..., description="Prompt template or instructions for the agent")
     agent_responsibility: str = Field(..., description="Specific responsibilities assigned to the agent")
     expected_output: str = Field(..., description="Expected output format or structure")
+    stream_output: bool = Field(..., description="Enable if the agent conversation need to be streamed")
     tools: Optional[List[Tool]]
     llm: LLM
 

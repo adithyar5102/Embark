@@ -1,11 +1,10 @@
 from typing import Dict, List, Optional, Tuple, Union
-from Embark.core.exception.workflow_execution_exception import InvalidTeamTypeException
-from Embark.core.llm.llm_provider_impl.autogen_llm_config import AutogenLLMProvider
-from Embark.core.prompts.manager_prompt import REFLECTION_PROMPT
-from Embark.modules.workflow_modules.workflow import LLM, Agent, Stdio, Tool, Workflow
-from Embark.services.agent_executors.executor import AgentExecutor
+from core.exception.workflow_execution_exception import InvalidTeamTypeException
+from core.llm.llm_provider_impl.autogen_llm_config import AutogenLLMProvider
+from core.prompts.manager_prompt import REFLECTION_AGENT_EXPECTED_OUTPUT, REFLECTION_AGENT_GOAL, REFLECTION_AGENT_PROMPT, REFLECTION_AGENT_RESPONSIBILITY
+from modules.workflow_modules.workflow import LLM, Agent, Stdio, Tool, Workflow
+from services.agent_executors.executor import AgentExecutor
 from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.ui import Console
 from autogen_agentchat.conditions import TextMentionTermination
 from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
 from autogen_ext.tools.mcp import StdioServerParams, mcp_server_tools, SseServerParams
@@ -29,10 +28,10 @@ class AutogenExecutor(AgentExecutor):
         manager_additional_instructions = f"\nInstructions:\n{manager_additional_instructions}\n" if manager_additional_instructions else ""
         reflection_instructions = Agent(
             name="reflection_agent",
-            goal="You are a reflection agent responsible for overseeing the execution and ensuring the task is executed efficiently.",
-            detailed_prompt=f"{REFLECTION_PROMPT}\n{manager_additional_instructions}\n\n- Send TERMINATE once the above task has been successfully executed and the user's objective has been achieved.",
-            agent_responsibility="",
-            expected_output="",
+            goal=REFLECTION_AGENT_GOAL,
+            detailed_prompt=f"{REFLECTION_AGENT_PROMPT}\n{manager_additional_instructions}\n",
+            agent_responsibility=REFLECTION_AGENT_RESPONSIBILITY,
+            expected_output=REFLECTION_AGENT_EXPECTED_OUTPUT,
             tools=[],
             llm=llm
         )
@@ -120,4 +119,4 @@ class AutogenExecutor(AgentExecutor):
 
         result = await team.run(task=workflow_task)
 
-        return result
+        return str(result)

@@ -6,7 +6,7 @@ class LLM(BaseModel):
     model: str = Field(..., json_schema_extra={"description": "Name of the language model"})
     provider: str = Field(..., json_schema_extra={"description": "Provider of the LLM, e.g., OpenAI, Anthropic"})
     top_probability: float = Field(..., ge=0.0, le=1.0, json_schema_extra={"description": "Top probability sampling value"})
-    temperature: float = Field(..., ge=0.0, le=2.0, json_schema_extra={"description": "Sampling temperature"})
+    temperature: float = Field(..., ge=0.0, le=1.0, json_schema_extra={"description": "Sampling temperature"})
     max_tokens: int = Field(..., gt=0, json_schema_extra={"description": "Maximum number of tokens to generate"})
 
 class Stdio(BaseModel):

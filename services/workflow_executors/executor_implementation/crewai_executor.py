@@ -7,7 +7,7 @@ from core.exception.workflow_execution_exception import InvalidProcessTypeExcept
 from core.llm.llm_provider_impl.crewai_llm_config import CrewAILLMProvider
 from modules.workflow_modules.workflow import ExecutionTypeCrewAI, Stdio, Tool, Workflow, LLM
 from modules.workflow_modules.workflow import Agent as WorkflowAgent
-from services.agent_executors.executor import AgentExecutor
+from services.workflow_executors.executor import AgentExecutor
 from crewai.tools.base_tool import BaseTool
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from mcp import StdioServerParameters

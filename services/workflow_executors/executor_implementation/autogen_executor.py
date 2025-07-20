@@ -3,7 +3,7 @@ from core.exception.workflow_execution_exception import InvalidTeamTypeException
 from core.llm.llm_provider_impl.autogen_llm_config import AutogenLLMProvider
 from core.prompts.manager_prompt import REFLECTION_AGENT_EXPECTED_OUTPUT, REFLECTION_AGENT_GOAL, REFLECTION_AGENT_PROMPT, REFLECTION_AGENT_RESPONSIBILITY
 from modules.workflow_modules.workflow import LLM, Agent, Stdio, Tool, Workflow
-from services.agent_executors.executor import AgentExecutor
+from services.workflow_executors.executor import AgentExecutor
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import TextMentionTermination
 from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat

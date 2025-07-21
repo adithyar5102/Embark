@@ -1,3 +1,4 @@
+from typing import Any, Optional
 from core.exception.llm_config_exception import InvalidLLMProviderError
 from core.llm.llm_provider import LLMProvider
 from autogen_ext.models.openai import OpenAIChatCompletionClient
@@ -13,7 +14,6 @@ class AutogenLLMProvider(LLMProvider):
             temperature=llm.temperature,
             top_p=llm.top_probability,
             max_tokens=llm.max_tokens,
-            # api_key=llm.api_key (optional, depending on implementation)
         )
 
     def get_anthropic_client(llm: LLM):
@@ -22,7 +22,6 @@ class AutogenLLMProvider(LLMProvider):
             temperature=llm.temperature,
             top_p=llm.top_probability,
             max_tokens=llm.max_tokens,
-            # api_key=llm.api_key (optional)
         )
 
     def get_ollama_client(llm: LLM):
@@ -31,7 +30,6 @@ class AutogenLLMProvider(LLMProvider):
             temperature=llm.temperature,
             top_p=llm.top_probability,
             max_tokens=llm.max_tokens,
-            # Optional: base_url=llm.base_url or server_url
         )
 
     def get_llm_instance(self, llm: LLM = None):
@@ -39,10 +37,10 @@ class AutogenLLMProvider(LLMProvider):
             return None
         match llm.provider.lower():
             case "openai" | "gemini" | "llama":
-                return self.get_openai_client(llm)
+                return self.get_openai_client(llm=llm)
             case "anthropic":
-                return self.get_anthropic_client(llm)
+                return self.get_anthropic_client(llm=llm)
             case "ollama":
-                return self.get_ollama_client(llm)
+                return self.get_ollama_client(llm=llm)
             case _:
                 raise InvalidLLMProviderError()

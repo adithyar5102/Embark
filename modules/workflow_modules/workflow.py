@@ -15,7 +15,7 @@ class Stdio(BaseModel):
 
 class Sse(BaseModel):
     connection_url: str = Field(..., json_schema_extra={"description": "URL for SSE (Server-Sent Events) connection"})
-    bearer_token: str = Field(..., json_schema_extra={"description": "Bearer token for sse server authentication"})
+    bearer_token: Optional[str] = Field(..., json_schema_extra={"description": "Bearer token for sse server authentication"})
 
 class Tool(BaseModel):
     name: str = Field(..., json_schema_extra={"description": "Name of the tool"})

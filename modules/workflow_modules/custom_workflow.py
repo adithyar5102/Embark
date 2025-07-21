@@ -1,12 +1,12 @@
 from typing import List, Optional, Union, Any
 from pydantic import BaseModel, model_validator, ValidationError
-from modules.workflow_modules.workflow import AgentFrameworks
+from modules.workflow_modules.workflow import Agent, AgentFrameworks
 from shared.constants import VALID_TYPES
 
 
 class CustomWorkflowAgentConfig(BaseModel):
+    agent_config: Agent
     agent_execution_framework: AgentFrameworks
-    agent_name: str
     is_entry_point: bool
     is_terminator: bool
     structured_response_format: Union[List[dict[str, Any]], dict[str, Any]]
@@ -59,20 +59,20 @@ class CustomWorkflowConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_workflow(self):
-        agent_map = {agent.agent_name: agent for agent in self.workflow}
+        agent_map = {agent.agent_config.name: agent for agent in self.workflow}
 
         for agent in self.workflow:
             # --- Validation 1: Check for valid parent/child references ---
             invalid_parents = [p for p in (agent.parent_agent_names or []) if p not in agent_map]
             if invalid_parents:
                 raise ValueError(
-                    f"Agent '{agent.agent_name}' has undefined parent(s): {', '.join(invalid_parents)}"
+                    f"Agent '{agent.agent_config.name}' has undefined parent(s): {', '.join(invalid_parents)}"
                 )
 
             invalid_children = [c for c in (agent.child_agent_names or []) if c not in agent_map]
             if invalid_children:
                 raise ValueError(
-                    f"Agent '{agent.agent_name}' has undefined child(ren): {', '.join(invalid_children)}"
+                    f"Agent '{agent.agent_config.name}' has undefined child(ren): {', '.join(invalid_children)}"
                 )
 
             # --- Validation 2: Check agent_node_invoke_condition keys against parent structured outputs ---
@@ -97,7 +97,7 @@ class CustomWorkflowConfig(BaseModel):
 
                     if missing_keys:
                         raise ValueError(
-                            f"Agent '{agent.agent_name}' references missing keys {missing_keys} "
+                            f"Agent '{agent.agent_config.name}' references missing keys {missing_keys} "
                             f"in parent '{parent_name}' structured_response_format."
                         )
 

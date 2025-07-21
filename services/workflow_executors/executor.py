@@ -1,8 +1,6 @@
 from abc import ABC
 
 class AgentExecutor(ABC):
-    async def register_agent():
-        ...
     async def get_agents_for_workflow():
         ...
     async def initialize_reflection():

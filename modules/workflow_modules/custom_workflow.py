@@ -46,7 +46,9 @@ Agent Fields:
 - `parent_agent_names` (Optional[List[str]]): Names of agents that pass control to this one.
 - `agent_node_invoke_condition` (Optional[dict]):
     Conditions on the parent output fields that must be satisfied to invoke this agent.
-- `loop_through_key` (Optional[str]):
+
+WORK IN PROGRESS
+- `loop_through_input_key_required_from_parent` (Optional[str]):
     If set, allows looping over an iterable key from the parent response (e.g., iterating over a list of items).
 
 Workflow Rules (validated automatically):
@@ -74,7 +76,7 @@ Use this example as a template to construct more complex multi-agent workflows.
         "goal": "Collect user input",
         "detailed_prompt": "Please gather the necessary input from the user.",
         "agent_responsibility": "User data collection",
-        "expected_output": "output_1: string, output_2: int",
+        "expected_output": "output_1: string, output_2: int, output_3: list",
         "stream_output": false,
         "tools": [
           {
@@ -101,8 +103,7 @@ Use this example as a template to construct more complex multi-agent workflows.
       },
       "child_agent_names": ["agent_2"],
       "parent_agent_names": null,
-      "agent_node_invoke_condition": null,
-      "loop_through_key": null
+      "agent_node_invoke_condition": null
     },
     {
       "agent_config": {
@@ -139,7 +140,9 @@ Use this example as a template to construct more complex multi-agent workflows.
       "agent_node_invoke_condition": {
         "output_1": true
       },
-      "loop_through_key": "output_2"
+      "input_required_from_parent": [
+        "output_3"
+      ]
     }
   ]
 }
@@ -151,12 +154,12 @@ Use this example as a template to construct more complex multi-agent workflows.
 class CustomWorkflowAgentConfig(BaseModel):
     agent_config: Agent
     agent_execution_framework: AgentFrameworks
-    is_entry_point: bool
+    is_entry_point: bool = False
     structured_response_format: Union[List[dict[str, Any]], dict[str, Any]]
-    child_agent_names: Optional[List[str]] = None
-    parent_agent_names: Optional[List[str]] = None
-    agent_node_invoke_condition: Optional[dict[str, Any]] = None
-    loop_through_key: Optional[str]
+    child_agent_names: List[str] = list()
+    parent_agent_names: List[str] = list()
+    agent_node_invoke_condition: dict[str, Any] = dict() # If it is the child node when should it be triggered.
+    input_keys_required_from_parent: List[str] = list() # If it is the child node provide keys for which the value is required requires. (context provider) (does not throw error if key not present) (if same key in loop through and input_keys_required_from_parent then provides the individual value present in the iterable)
 
     @model_validator(mode="after")
     def validate_config(self):
@@ -193,78 +196,3 @@ class CustomWorkflowAgentConfig(BaseModel):
 
         return self
 
-
-class CustomWorkflowConfig(BaseModel):
-    workflows: List[CustomWorkflowAgentConfig]
-
-    @model_validator(mode="after")
-    def validate_workflow(self):
-        # agent_map = {agent.agent_config.name: agent for agent in self.workflows}
-
-        # entry_points = [agent for agent in self.workflows if agent.is_entry_point]
-
-        entry_point_exists = False
-        agent_map = dict()
-        unique_agent_names = set()
-
-        for agent in self.workflows:
-            # Create agent map
-            agent_map[agent.agent_config.name] = agent
-
-            # Validate entry point
-            if agent.is_entry_point and entry_point_exists is False:
-                entry_point_exists = True
-            elif agent.is_entry_point and entry_point_exists is True:
-                raise ValueError(
-                    "There must be exactly one entry point agent."
-                )
-
-            # Validate unique agent names
-            if agent.agent_config.name in unique_agent_names:
-                raise ValueError(
-                    "Agents must have unique names."
-                )
-            else:
-                unique_agent_names.add(agent.agent_config.name)
-
-        for agent in self.workflows:
-            # --- Validation 1: Check for valid parent/child references ---
-            invalid_parents = [p for p in (agent.parent_agent_names or []) if p not in agent_map]
-            if invalid_parents:
-                raise ValueError(
-                    f"Agent '{agent.agent_config.name}' has undefined parent(s): {', '.join(invalid_parents)}"
-                )
-
-            invalid_children = [c for c in (agent.child_agent_names or []) if c not in agent_map]
-            if invalid_children:
-                raise ValueError(
-                    f"Agent '{agent.agent_config.name}' has undefined child(ren): {', '.join(invalid_children)}"
-                )
-
-            # --- Validation 2: Check agent_node_invoke_condition keys against parent structured outputs ---
-            if agent.agent_node_invoke_condition:
-                for parent_name in agent.parent_agent_names or []:
-                    parent = agent_map.get(parent_name)
-                    if not parent:
-                        continue  # Already reported in Validation 1
-                    # Extract keys from parent structured response format
-                    def extract_keys(format_data):
-                        if isinstance(format_data, dict):
-                            return set(format_data.keys())
-                        elif isinstance(format_data, list) and isinstance(format_data[0], dict):
-                            return set(format_data[0].keys())
-                        return set()
-
-                    parent_keys = extract_keys(parent.structured_response_format)
-                    missing_keys = [
-                        k for k in agent.agent_node_invoke_condition.keys()
-                        if k not in parent_keys
-                    ]
-
-                    if missing_keys:
-                        raise ValueError(
-                            f"Agent '{agent.agent_config.name}' references missing keys {missing_keys} "
-                            f"in parent '{parent_name}' structured_response_format."
-                        )
-
-        return self

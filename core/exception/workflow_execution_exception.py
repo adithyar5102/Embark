@@ -22,3 +22,14 @@ class InvalidJsonResponse():
         message = "The agent response does not follow the provided pydantic structure.\n"
         message += error_message if error_message else ""
         super().__init__(message)
+
+class EntryPointNotFoundException():
+    def __init__(self):
+        message = "The Entry point for the execution workflow is missing.\n"
+        super().__init__(message)
+
+class CyclicWorkflowException():
+    def __init__(self):
+        message = "The workflow configuration consists a agent cycle.\n"
+        super().__init__(message)
+

@@ -41,7 +41,7 @@ class Agent(BaseModel):
     agent_responsibility: str = Field(..., json_schema_extra={"description": "Specific responsibilities assigned to the agent"})
     expected_output: str = Field(..., json_schema_extra={"description": "Expected output format or structure"})
     stream_output: bool = Field(..., json_schema_extra={"description": "Enable if the agent conversation need to be streamed"})
-    tools: Optional[List[Tool]]
+    tools: List[Tool] = []
     llm: LLM
 
 class Workflow(BaseModel):

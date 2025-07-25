@@ -8,14 +8,18 @@ class LangGraphExecutor(CustomAgentExecutor):
     def __init__(self):
         self.lang_graph_agent_instance = LangGraphAgent()
     
-    async def execute(self, agent: Agent, response_format: Any):
+    async def execute(self, agent: Agent, response_format: Any, task_message: str):
         lang_graph_agent = await self.lang_graph_agent_instance.register_agent(
             agent=agent,
             response_format=response_format
         )
 
+        message = {
+            "message": task_message
+        }
+        
         result = await lang_graph_agent.ainvoke(
-            input=input
+            input=message
         )
 
-        return result
+        return result["structured_response"]

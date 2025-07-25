@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
-from modules.api_modules.workflow import WorkflowModel
-from modules.workflow_modules.custom_workflow import CustomWorkflowConfig
+from services.custom_workflow_executor.custom_workflow_manager import CustomWorkflowManager
+from modules.api_modules.workflow import WorkflowModel, CustomWorkflowConfig
 from modules.workflow_modules.workflow import Workflow
 from services.workflow_executors.executor_implementation.autogen_executor import AutogenExecutor
 from services.workflow_executors.executor_implementation.crewai_executor import CrewAIExecutor
@@ -27,4 +27,10 @@ async def execute_workflow(request: WorkflowModel):
         # Log exception or handle specifically
         raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
 
-    return {"status": "Execution started", "framework": framework}
+    return {"status": "Execution completed", "framework": framework}
+
+@router.post("/custom_workflow/execute")
+async def test(request: CustomWorkflowConfig):
+    custom_workflow_object = CustomWorkflowManager(request.workflows)
+    result = await custom_workflow_object.execute_workflow(request.task)
+    return result

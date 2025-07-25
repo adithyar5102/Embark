@@ -11,7 +11,7 @@ class CrewAIExecutor(CustomAgentExecutor):
     def __init__(self):
         self.crew_ai_instance = CrewAIAgent()
         
-    async def execute(self, agent: Agent, response_format: Any):
+    async def execute(self, agent: Agent, response_format: Any, task_message: str):
         crew_ai_agent = await self.crew_ai_instance.register_agent(agent=agent)
         crew_ai_task = await self.crew_ai_instance.register_task(
             agent=agent,
@@ -22,7 +22,13 @@ class CrewAIExecutor(CustomAgentExecutor):
             crew_ai_task=[crew_ai_task],
         )
         
-        result = await crew.kickoff_async()
+        message = {
+            "message": task_message
+        }
+
+        result = await crew.kickoff_async(
+            inputs=message
+        )
 
         if result.pydantic is None:
             raise InvalidJsonResponse()

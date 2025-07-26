@@ -59,19 +59,9 @@ class CustomWorkflowManager():
         except Exception as e:
             # Log exception or handle specifically
             raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
-        
     
-    # class CustomWorkflowAgentConfig(BaseModel):
-    #     agent_config: Agent
-    #     agent_execution_framework: AgentFrameworks
-    #     is_entry_point: bool = False
-    #     structured_response_format: Union[List[dict[str, Any]], dict[str, Any]]
-    #     child_agent_names: List[str] = list()
-    #     parent_agent_names: List[str] = list()
-    #     agent_node_invoke_condition: dict[str, Any] = dict() # If it is the child node when should it be triggered.
-    #     input_keys_required_from_parent: str[str] = list() # If it is the child node provide keys for which the value is required requires. (context provider) (does not throw error if key not present) (if same key in loop through and input_keys_required_from_parent then provides the individual value present in the iterable)
-
-    def get_valid_child_name(self, result: dict, child_agent_names):
+    # If the there are no matching request form the child the first child will be triggered.
+    def get_valid_child_name(self, result: dict, child_agent_names: list[str]):
         def is_key_value_present(parent_dict: dict, child_dict: dict) -> bool:
             for key, value in child_dict.items():
                 if key not in parent_dict or parent_dict[key] != value:
@@ -85,11 +75,14 @@ class CustomWorkflowManager():
                 parent_dict=result,
                 child_dict=child_workflow.agent_node_invoke_condition
             ):
+                # If match return child name and required keys
                 return child_workflow.agent_config.name, child_workflow.input_keys_required_from_parent
 
-        return None
+        # If no match return first child name and required keys
+        child_workflow:CustomWorkflowAgentConfig = self.agent_config_map[child_agent_names[0]]
+        return child_workflow.agent_config.name, child_workflow.input_keys_required_from_parent
 
-    async def execute_workflow(self, task: str):
+    async def execute_workflow(self, task: str, share_task_among_agents: bool = True):
         if self.is_cyclic(self.start_node):
             raise CyclicWorkflowException()
         
@@ -116,18 +109,18 @@ class CustomWorkflowManager():
                 task_message=agent_input_message
             )
 
-            # Update the agent_message with input_keys_required_from_parent
-            child_name, input_keys = self.get_valid_child_name(
-                result=result,
-                child_agent_names=workflow_node_config.child_agent_names
-            )
-
-            if child_name is None:
+            # If no child then return result
+            if workflow_node_config.child_agent_names:
+                # Update the agent_message with input_keys_required_from_parent
+                child_name, input_keys = self.get_valid_child_name(
+                    result=result,
+                    child_agent_names=workflow_node_config.child_agent_names
+                )    
+                current_node = child_name
+            else:
                 flag = False
                 return result
-
-            current_node = child_name
-
+            
             # get the next node to invoke and gather data from result. If key is "" or None send entire response.
             requested_messages_form_child = dict()
             # check for the key value in the result
@@ -135,10 +128,16 @@ class CustomWorkflowManager():
                 for key in input_keys:
                     if key in result.keys():
                         requested_messages_form_child[key] = result[key]
-            # if not present assign result
-            if requested_messages_form_child:
-                agent_input_message = json.dumps(requested_messages_form_child)
+            
+            # if required input fields not present assign result
+            if share_task_among_agents:
+                agent_input_message = f"**Task**:\n{task}\n\n**Task Context:**\n"
             else:
-                agent_input_message = json.dumps(result)
+                agent_input_message = "**Task Context:**\n"
+
+            if requested_messages_form_child:
+                agent_input_message += json.dumps(requested_messages_form_child)
+            else:
+                agent_input_message += json.dumps(result)
 
             loop_count += 1

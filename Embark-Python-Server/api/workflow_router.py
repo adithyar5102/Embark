@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, HTTPException
 
 from services.custom_workflow_executor.custom_workflow_manager import CustomWorkflowManager
@@ -10,22 +11,26 @@ from services.workflow_executors.executor_implementation.langgraph_executor impo
 router = APIRouter()
 
 @router.post("/execute")
-async def execute_workflow(request: WorkflowModel):
-    framework = request.workflow.agent_execution_framework.lower()
+async def execute_workflow(request: List[WorkflowModel]):
+    for current_workflow in request:
+        framework = current_workflow.workflow.agent_execution_framework.lower()
 
-    try:
-        match framework:
-            case "autogen":
-                await AutogenExecutor().execute(workflow=request.workflow, workflow_task=request.task)
-            case "lang_graph":
-                await CrewAIExecutor().execute(workflow=request.workflow, workflow_task=request.task)
-            case "crewai":
-                await LangGraphExecutor().execute(workflow=request.workflow, workflow_task=request.task)
-            case _:
-                raise HTTPException(status_code=400, detail=f"Unsupported framework: {framework}")
-    except Exception as e:
-        # Log exception or handle specifically
-        raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
+        try:
+            match framework:
+                case "autogen":
+                    await AutogenExecutor().execute(workflow=current_workflow.workflow, workflow_task=current_workflow.task)
+                case "lang_graph":
+                    await CrewAIExecutor().execute(workflow=current_workflow.workflow, workflow_task=current_workflow.task)
+                case "crewai":
+                    await LangGraphExecutor().execute(workflow=current_workflow.workflow, workflow_task=current_workflow.task)
+                case _:
+                    raise HTTPException(status_code=400, detail=f"Unsupported framework: {framework}")
+        except Exception as e:
+            # Log exception or handle specifically
+            # status update
+            raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
+
+        # status update
 
     return {"status": "Execution completed", "framework": framework}
 

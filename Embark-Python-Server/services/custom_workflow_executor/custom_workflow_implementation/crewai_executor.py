@@ -3,7 +3,7 @@ import json
 from typing import Any
 from core.exception.workflow_execution_exception import InvalidJsonResponse
 from shared.crewai.crewai_agent import CrewAIAgent
-from services.custom_workflow_executor.executor import CustomAgentExecutor
+from services.custom_workflow_executor.custom_agent_executor import CustomAgentExecutor
 from modules.workflow_modules.workflow import Agent
 from crewai import Crew
 

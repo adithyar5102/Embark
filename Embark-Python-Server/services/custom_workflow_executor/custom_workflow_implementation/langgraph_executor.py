@@ -1,7 +1,7 @@
 
 from typing import Any
 from shared.langgraph.langgraph_agent import LangGraphAgent
-from services.custom_workflow_executor.executor import CustomAgentExecutor
+from services.custom_workflow_executor.custom_agent_executor import CustomAgentExecutor
 from modules.workflow_modules.workflow import Agent
 
 class LangGraphExecutor(CustomAgentExecutor):

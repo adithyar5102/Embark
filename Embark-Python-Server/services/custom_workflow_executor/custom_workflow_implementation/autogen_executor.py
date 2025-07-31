@@ -1,7 +1,7 @@
 
 from core.exception.autogen_error import UnsupportedAutogenStructuredResponseError
 from modules.workflow_modules.workflow import Agent
-from services.custom_workflow_executor.executor import CustomAgentExecutor
+from services.custom_workflow_executor.custom_agent_executor import CustomAgentExecutor
 
 
 class AutogenExecutor(CustomAgentExecutor):

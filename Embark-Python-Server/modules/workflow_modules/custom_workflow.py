@@ -60,93 +60,45 @@ Workflow Rules (validated automatically):
 5. `agent_node_invoke_condition` keys must match keys from parent `structured_response_format`.
 6. `structured_response_format` must only use types from the allowed set (e.g., "string", "int", "bool", etc.)
 
-Example Summary:
-----------------
-- `agent_1`: Entry-point agent that collects user input, outputs `output_1` (str) and `output_2` (int).
-- `agent_2`: Child agent that analyzes the input. Triggered only if `output_1` from `agent_1` is truthy.
-  It loops over `output_2` if it’s a list and produces a `final_output` (bool).
-
-Use this example as a template to construct more complex multi-agent workflows.
+Example:
 
 {
-  "workflows": [
-    {
-      "agent_config": {
-        "name": "agent_1",
-        "goal": "Collect user input",
-        "detailed_prompt": "Please gather the necessary input from the user.",
-        "agent_responsibility": "User data collection",
-        "expected_output": "output_1: string, output_2: int, output_3: list",
-        "stream_output": false,
-        "tools": [
-          {
-            "name": "FormFillerTool",
-            "connection": {
-              "command": "python",
-              "arguments": ["fill_form.py", "--form-type", "basic"]
-            }
-          }
-        ],
-        "llm": {
-          "model": "gpt-4o",
-          "provider": "openai",
-          "top_probability": 0.9,
-          "temperature": 0.7,
-          "max_tokens": 1000
+  "agent_config": {
+    "name": "data_collector",
+    "goal": "Collect user input from a form",
+    "detailed_prompt": "Gather user information for processing eligibility.",
+    "agent_responsibility": "Prompt and collect user data",
+    "expected_output": "user_name: str, user_age: int, user_interests: list",
+    "stream_output": false,
+    "tools": [
+      {
+        "name": "FormTool",
+        "connection": {
+          "command": "python",
+          "arguments": ["form_filler.py", "--form-type", "user_input"]
         }
-      },
-      "agent_execution_framework": "crewai",
-      "is_entry_point": true,
-      "structured_response_format": {
-        "output_1": "bool",
-        "output_2": "list"
-      },
-      "child_agent_names": ["agent_2"],
-      "parent_agent_names": null,
-      "agent_node_invoke_condition": null
-    },
-    {
-      "agent_config": {
-        "name": "agent_2",
-        "goal": "Analyze user data",
-        "detailed_prompt": "Evaluate the input provided and determine eligibility.",
-        "agent_responsibility": "Data analysis and evaluation",
-        "expected_output": "final_output: bool",
-        "stream_output": true,
-        "tools": [
-          {
-            "name": "EligibilityCheckerTool",
-            "connection": {
-              "connection_url": "https://sse.example.com/stream",
-              "bearer_token": "your_token_here"
-            }
-          }
-        ],
-        "llm": {
-          "model": "gpt-4",
-          "provider": "openai",
-          "top_probability": 0.8,
-          "temperature": 0.5,
-          "max_tokens": 800
-        }
-      },
-      "agent_execution_framework": "crewai",
-      "is_entry_point": false,
-      "structured_response_format": {
-        "final_output": "bool"
-      },
-      "child_agent_names": null,
-      "parent_agent_names": ["agent_1"],
-      "agent_node_invoke_condition": {
-        "output_1": true
-      },
-      "input_required_from_parent": [
-        "output_3"
-      ]
+      }
+    ],
+    "llm": {
+      "model": "gpt-4o",
+      "provider": "openai",
+      "top_probability": 1.0,
+      "temperature": 0.7,
+      "max_tokens": 1024
     }
-  ]
+  },
+  "agent_execution_framework": "crewai",
+  "is_entry_point": true,
+  "structured_response_format": {
+    "user_name": "str",
+    "user_age": "int",
+    "user_interests": "list"
+  },
+  "child_agent_names": ["eligibility_checker"],
+  "parent_agent_names": [],
+  "agent_node_invoke_condition": {},
+  "input_keys_required_from_parent": []
 }
-
 
 """
 

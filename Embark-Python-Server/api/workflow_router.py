@@ -12,10 +12,8 @@ router = APIRouter()
 
 @router.post("/execute")
 async def execute_workflow(request: List[WorkflowModel]):
-    return True
     for current_workflow in request:
         framework = current_workflow.workflow.agent_execution_framework.lower()
-
         try:
             match framework:
                 case "autogen":
@@ -37,7 +35,6 @@ async def execute_workflow(request: List[WorkflowModel]):
 
 @router.post("/custom_workflow/execute")
 async def test(request: CustomWorkflowConfig):
-    return True
     custom_workflow_object = CustomWorkflowManager(request.workflows)
-    result = await custom_workflow_object.execute_workflow(request.task)
+    result = await custom_workflow_object.execute_workflow(request.task, share_task_among_agents=request.share_task_among_agents)
     return result

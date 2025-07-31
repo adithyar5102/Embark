@@ -163,7 +163,7 @@ Example input:
     }
   ],
   "task": "Collect user data and determine eligibility",
-  "feed_task_to_all_agents": true
+  "share_task_among_agents": true
 }
 
 """
@@ -171,7 +171,7 @@ Example input:
 class CustomWorkflowConfig(BaseModel):
     workflows: List[CustomWorkflowAgentConfig]
     task: str = ""
-    feed_task_to_all_agents: bool = True
+    share_task_among_agents: bool = True
 
     @model_validator(mode="after")
     def validate_workflow(self):

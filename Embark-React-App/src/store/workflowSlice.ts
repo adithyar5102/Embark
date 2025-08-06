@@ -1,21 +1,20 @@
 // store/workflowSlice.ts
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Workflow, WorkflowNode, WorkflowEdge } from '../workflow/interface';
-// Add at the bottom of workflowSlice.ts or in a new file
-import type { RootState } from '../store'; // adjust path as needed
+import type { RootState } from './index';
 
 export const selectNodes = (state: RootState) => state.workflow.nodes;
 export const selectEdges = (state: RootState) => state.workflow.edges;
-export const selectWorkflow = (state: RootState) => state.workflow.workflow;
+export const selectWorkflow = (state: RootState) => state.workflow.workflows;
 
 interface WorkflowState {
-  workflow: Workflow | null;
+  workflows: Workflow[];
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
 }
 
 const initialState: WorkflowState = {
-  workflow: null,
+  workflows: [],
   nodes: [],
   edges: [],
 };
@@ -24,9 +23,14 @@ const workflowSlice = createSlice({
   name: 'workflow',
   initialState,
   reducers: {
-    setWorkflow(state, action: PayloadAction<Workflow>) {
-      state.workflow = action.payload;
+    addWorkflow(state, action: PayloadAction<Workflow>) {
+      state.workflows.push(action.payload);
     },
+
+    removeWorkflow(state, action: PayloadAction<string>) {
+      state.workflows = state.workflows.filter(workflow => workflow.name !== action.payload);
+    },
+    
     setNodes(state, action: PayloadAction<WorkflowNode[]>) {
       state.nodes = action.payload;
     },
@@ -59,7 +63,7 @@ const workflowSlice = createSlice({
       state.edges = state.edges.filter(edge => edge.id !== action.payload);
     },
     resetWorkflowState(state) {
-      state.workflow = null;
+      state.workflows = [];
       state.nodes = [];
       state.edges = [];
     },
@@ -67,7 +71,8 @@ const workflowSlice = createSlice({
 });
 
 export const {
-  setWorkflow,
+  addWorkflow,
+  removeWorkflow,
   setNodes,
   setEdges,
   addNode,

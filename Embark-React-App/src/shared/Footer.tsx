@@ -5,23 +5,13 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 
-/**
- * Footer Component
- *
- * This component provides standard footer content, including copyright
- * information and links to social media or other relevant pages.
- *
- * Styling is handled by Tailwind CSS for layout and typography, and
- * Material-UI Icons for social media links.
- * Theme updated for better integration with the new vibrant palette.
- */
 const Footer: React.FC = () => {
   return (
     <footer className="bg-gray-800 text-gray-300 py-10 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left">
         {/* Copyright Info */}
         <Typography variant="body2" className="mb-4 md:mb-0 text-gray-400">
-          &copy; {new Date().getFullYear()} AI Agent Execution Project. All rights reserved.
+          &copy; {new Date().getFullYear()} Project Embark. All rights reserved.
         </Typography>
 
         {/* Social Media Links */}

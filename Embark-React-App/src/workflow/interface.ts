@@ -41,6 +41,10 @@ export const ExecutionTypeCrewAI = {
   SEQUENTIAL : "sequential",
 }
 
+export const ExecutionTypeLanggraph = {
+  SUPERVISOR : "supervisor",
+}
+
 export interface Agent {
   name: string;
   goal: string;
@@ -56,10 +60,11 @@ export interface Workflow {
   name: string;
   description: string;
   agents: Agent[];
-  agent_execution_framework: typeof AgentFrameworks;
+  agent_execution_framework: string;
   execution_type: string;
   reflection_additional_instruction?: string;
   reflection_llm_config?: LLM;
+  task: string;
 }
 
 // Node and Edge (custom) interfaces
@@ -84,4 +89,9 @@ export interface WorkflowEdge {
   source: string;
   target: string;
   label?: string;
+}
+
+export interface workflowStatus {
+  name: string;
+  status: 'scheduled' | 'running' | 'completed' | 'failed';
 }

@@ -24,13 +24,6 @@ const Navbar: React.FC = () => {
 
       </div>
 
-      {/* Action Buttons (for larger screens) */}
-      <div className="hidden md:flex space-x-4">
-        <button className="px-5 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 font-medium shadow-md">
-          Get Started
-        </button>
-      </div>
-
       {/* Mobile Menu Icon (Hamburger) - Not implemented for brevity, but would go here */}
       <div className="md:hidden">
         {/* You would typically add a hamburger icon here for mobile navigation */}

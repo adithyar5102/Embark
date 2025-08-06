@@ -514,24 +514,6 @@ export default function CustomWorkflow() {
       >
         {validationModalContent}
       </Modal>
-      <button onClick={() => {
-        updateNode({ name: 'a', status: 'completed' });
-        console.log('Node updated');
-      }}>
-        a
-      </button>
-      <button onClick={() => {
-        updateNode({ name: 'b', status: 'failed' });
-        console.log('Node updated');
-      }}>
-        b
-      </button>
-      <button onClick={() => {
-        updateNode({ name: 'c', status: 'running' });
-        console.log('Node updated');
-      }}>
-        c
-      </button>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import {
   Background,
   ReactFlow,
   ReactFlowProvider,
-  addEdge,
+  addEdge as addEdgeUtil,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -13,6 +13,7 @@ import {
   type Connection,
   ConnectionLineType,
 } from '@xyflow/react';
+
 import {
   Button,
   Dialog,
@@ -29,14 +30,18 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 
 import '@xyflow/react/dist/style.css';
-import type { CustomNodeData } from './initialElements';
+import type { CustomNodeData } from './interface';
 import CustomNode from './CustomNode';
 
 interface FlowProps {
   inputNodes: Node<CustomNodeData>[];
   inputEdges: Edge[];
   onNodeClick: (label: string) => void;
-  feature: 'workflow' | 'custom-workflow';
+  addNewNode: (node: any) => void;
+  addNewEdge: (edge: any) => void;
+  setAllNodes: (nodes: Node[]) => void;
+  setAllEdges: (edges: Edge[]) => void;
+
 }
 
 const nodeTypes = {
@@ -57,17 +62,21 @@ const getLayoutedElements = (
   options: Record<string, string> = {}
 ) => {
   const isHorizontal = options?.['elk.direction'] === 'RIGHT';
+  // Deep clone nodes and edges to avoid mutating frozen objects
+  const clonedNodes = nodes.map((node) => ({ ...node, data: { ...node.data }, position: { ...node.position } }));
+  const clonedEdges = edges.map((edge) => ({ ...edge }));
+
   const graph = {
     id: 'root',
     layoutOptions: options,
-    children: nodes.map((node) => ({
+    children: clonedNodes.map((node) => ({
       ...node,
       targetPosition: isHorizontal ? 'left' : 'top',
       sourcePosition: isHorizontal ? 'right' : 'bottom',
       width: 150,
       height: 50,
     })),
-    edges: edges,
+    edges: clonedEdges,
   };
 
   return elk
@@ -82,9 +91,7 @@ const getLayoutedElements = (
     .catch(console.error);
 };
 
-function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+function LayoutFlow({ inputNodes, inputEdges, onNodeClick, addNewNode, addNewEdge, setAllNodes, setAllEdges }: FlowProps) {
   const { fitView } = useReactFlow();
 
   // Dialog State
@@ -92,6 +99,12 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
   const [label, setLabel] = useState('');
   const [positionType, setPositionType] = useState<'start' | 'mid' | 'end'>('end');
   const [error, setError] = useState('');
+
+  // For mid node insertion
+  const [aboveLabel, setAboveLabel] = useState('');
+  const [belowLabel, setBelowLabel] = useState('');
+  const [startTargetLabel, setStartTargetLabel] = useState('');
+  const [endSourceLabel, setEndSourceLabel] = useState('');
 
   const openDialog = () => {
     setLabel('');
@@ -102,95 +115,55 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
 
   const closeDialog = () => setOpen(false);
 
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
-
   const handleNodeClick = (event: React.MouseEvent, node: Node) => {
     onNodeClick(node.data.label);
   };
 
-  const onLayout = useCallback(
-    ({ direction }: { direction: 'DOWN' | 'RIGHT' }) => {
-      const opts = { 'elk.direction': direction, ...elkOptions };
-      getLayoutedElements(nodes, edges, opts).then((result) => {
-        if (result) {
-          setNodes(result.nodes);
-          setEdges(result.edges);
-          requestAnimationFrame(() => fitView());
-        }
-      });
-    },
-    [nodes, edges, setNodes, setEdges, fitView]
-  );
-
-  useLayoutEffect(() => {
-    if (inputNodes.length === 0 && inputEdges.length === 0) return;
-    const opts = { 'elk.direction': 'DOWN', ...elkOptions };
-    getLayoutedElements(inputNodes, inputEdges, opts).then((result) => {
-      if (result) {
-        setNodes(result.nodes);
-        setEdges(result.edges);
-        requestAnimationFrame(() => fitView());
-      }
-    });
-  }, [inputNodes, inputEdges, setNodes, setEdges, fitView]);
-
   // Add Node Handler
-  const [aboveLabel, setAboveLabel] = useState('');
-  const [belowLabel, setBelowLabel] = useState('');
-  const [startTargetLabel, setStartTargetLabel] = useState('');
-  const [endSourceLabel, setEndSourceLabel] = useState('');
-
   const handleAddNode = () => {
     if (!label.trim()) {
       setError('Label is required');
       return;
     }
 
-    if (nodes.some((n) => n.data.label === label.trim())) {
+    if (inputNodes.some((n) => n.data.label === label.trim())) {
       setError('Label must be unique');
       return;
     }
 
-    const newId = `${nodes.length + 1}`;
+    const newId = `${inputNodes.length + 1}`;
     const newNode: Node<CustomNodeData> = {
       id: newId,
       type: 'custom',
-      data: { label: label.trim(), status: 'created' },
+      data: { label: label.trim(), status: 'scheduled' },
       position: { x: 0, y: 0 },
     };
 
-    const updatedNodes = [...nodes, newNode];
-    let updatedEdges = [...edges];
+    let updatedEdges: Edge[] = [...inputEdges]; // Start with existing edges
 
     if (positionType === 'start') {
-      const originalStart = nodes.find((n) =>
-        edges.some((e) => e.source === n.id)
-      );
-      if (originalStart) {
+      const targetNode = inputNodes.find((n) => n.data.label === startTargetLabel);
+      if (targetNode) {
         updatedEdges.push({
-          id: `e${newId}-${originalStart.id}`,
+          id: `e${newId}-${targetNode.id}`,
           source: newId,
-          target: originalStart.id,
-          label: `${label.trim()} to ${originalStart.data.label}`,
+          target: targetNode.id,
+          label: `${label.trim()} to ${targetNode.data.label}`,
         });
       }
     } else if (positionType === 'end') {
-      const allTargets = new Set(edges.map((e) => e.target));
-      const leafNodes = nodes.filter((n) => !allTargets.has(n.id));
-      if (leafNodes.length > 0) {
+      const sourceNode = inputNodes.find((n) => n.data.label === endSourceLabel);
+      if (sourceNode) {
         updatedEdges.push({
-          id: `e${leafNodes[0].id}-${newId}`,
-          source: leafNodes[0].id,
+          id: `e${sourceNode.id}-${newId}`,
+          source: sourceNode.id,
           target: newId,
-          label: `${leafNodes[0].data.label} to ${label.trim()}`,
+          label: `${sourceNode.data.label} to ${label.trim()}`,
         });
       }
     } else if (positionType === 'mid') {
-      const aboveNode = nodes.find((n) => n.data.label === aboveLabel);
-      const belowNode = nodes.find((n) => n.data.label === belowLabel);
+      const aboveNode = inputNodes.find((n) => n.data.label === aboveLabel);
+      const belowNode = inputNodes.find((n) => n.data.label === belowLabel);
 
       if (!aboveNode || !belowNode) {
         setError('Above and Below labels must be selected');
@@ -202,7 +175,7 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
         return;
       }
 
-      const existingEdge = edges.find(
+      const existingEdge = inputEdges.find(
         (e) => e.source === aboveNode.id && e.target === belowNode.id
       );
 
@@ -211,10 +184,12 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
         return;
       }
 
-      // Remove original edge
-      updatedEdges = updatedEdges.filter((e) => e.id !== existingEdge.id);
+      // Filter out the existing edge between aboveNode and belowNode
+      updatedEdges = updatedEdges.filter(
+        (e) => !(e.source === aboveNode.id && e.target === belowNode.id)
+      );
 
-      // Add new intermediate edges
+      // Add two new edges to insert in the middle
       updatedEdges.push(
         {
           id: `e${aboveNode.id}-${newId}`,
@@ -231,17 +206,36 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
       );
     }
 
-    getLayoutedElements([...updatedNodes], updatedEdges, {
-      'elk.direction': 'DOWN',
-      ...elkOptions,
-    }).then((result) => {
-      if (result) {
-        setNodes(result.nodes);
-        setEdges(result.edges);
-        closeDialog();
+    // Do layout using the new combined nodes and edges
+    const updatedNodes = [...inputNodes, newNode];
+
+    const opts = { 'elk.direction': 'DOWN', ...elkOptions };
+    getLayoutedElements(updatedNodes, updatedEdges, opts).then((result) => {
+      if (result?.nodes && result?.edges) {
+        // Update Redux state AFTER layout is applied
+        setAllNodes(result.nodes);
+        setAllEdges(result.edges); // Use the potentially modified 'updatedEdges'
+
+        requestAnimationFrame(() => fitView());
       }
     });
+
+    closeDialog();
   };
+
+
+  // Handle edge creation from react-flow connect event
+  const onConnect = useCallback(
+    (params: Connection) => {
+      const newEdge: Edge = {
+        id: `e${params.source}-${params.target}`,
+        source: params.source!,
+        target: params.target!,
+      };
+      addNewEdge(newEdge);
+    },
+    [addNewEdge]
+  );
 
   return (
     <div className="flex flex-col h-full w-full bg-gray-50 relative">
@@ -257,11 +251,9 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
       </Box>
 
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={inputNodes}
+        edges={inputEdges}
         onConnect={onConnect}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         nodeTypes={nodeTypes}
         connectionLineType={ConnectionLineType.SimpleBezier}
@@ -312,7 +304,7 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
                 onChange={(e) => setStartTargetLabel(e.target.value)}
                 label="Connect to Node"
               >
-                {nodes.map((n) => (
+                {inputNodes.map((n) => (
                   <MenuItem key={n.id} value={n.data.label}>
                     {n.data.label}
                   </MenuItem>
@@ -329,7 +321,7 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
                 onChange={(e) => setEndSourceLabel(e.target.value)}
                 label="Connect from Node"
               >
-                {nodes.map((n) => (
+                {inputNodes.map((n) => (
                   <MenuItem key={n.id} value={n.data.label}>
                     {n.data.label}
                   </MenuItem>
@@ -347,7 +339,7 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
                   onChange={(e) => setAboveLabel(e.target.value)}
                   label="Above Node"
                 >
-                  {nodes.map((n) => (
+                  {inputNodes.map((n) => (
                     <MenuItem key={n.id} value={n.data.label}>
                       {n.data.label}
                     </MenuItem>
@@ -362,11 +354,11 @@ function LayoutFlow({ inputNodes, inputEdges, onNodeClick, feature }: FlowProps)
                   onChange={(e) => setBelowLabel(e.target.value)}
                   label="Below Node"
                 >
-                  {nodes.map((n) => (
+                  {inputNodes.map((n) => (
                     <MenuItem key={n.id} value={n.data.label}>
                       {n.data.label}
-                    </MenuItem>
-                  ))}
+                  </MenuItem>
+                ))}
                 </Select>
               </FormControl>
             </>

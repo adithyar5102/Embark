@@ -1,0 +1,23 @@
+@keyframes rotate-border {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animated-border {
+  position: relative;
+}
+
+.animated-border::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border: 3px dashed rgba(255, 215, 0, 0.7); /* gold-ish border */
+  border-radius: 8px;
+  animation: rotate-border 2s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}

@@ -1,10 +1,12 @@
 // store/index.ts
 import { configureStore } from '@reduxjs/toolkit';
 import workflowReducer from './workflowSlice';
+import customWorkflowReducer from './customWorkflowSlice';
 
 const store = configureStore({
   reducer: {
     workflow: workflowReducer,
+    customWorkflow: customWorkflowReducer
   },
 });
 

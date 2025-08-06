@@ -1,6 +1,6 @@
 from typing import Optional
 from core.prompts.manager_prompt import REFLECTION_AGENT_EXPECTED_OUTPUT, REFLECTION_AGENT_GOAL, REFLECTION_AGENT_PROMPT, REFLECTION_AGENT_RESPONSIBILITY
-from modules.workflow_modules.workflow import LLM, Agent, Workflow
+from models.workflow_models.workflow import LLM, Agent, Workflow
 from services.workflow_executors.agent_executor import AgentExecutor
 from shared.autogen.autogen_agent import AutogenAgent
 

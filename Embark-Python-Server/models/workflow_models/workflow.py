@@ -34,6 +34,9 @@ class ExecutionTypeCrewAI(str, Enum):
     HIERARCHICAL = "hierarchical"
     SEQUENTIAL = "sequential"
 
+class ExecutionTypeLanggraph(str, Enum):
+    SUPERVISOR = "supervisor"
+    
 class Agent(BaseModel):
     name: str = Field(..., json_schema_extra={"description": "Name of the agent"})
     goal: str = Field(..., json_schema_extra={"description": "Primary goal of the agent"})
@@ -69,6 +72,8 @@ class Workflow(BaseModel):
             valid_types = {e.value for e in ExecutionTypeAutogen}
         elif framework_value == "crewai":
             valid_types = {e.value for e in ExecutionTypeCrewAI}
+        elif framework_value == "langgraph":
+            valid_types = {e.value for e in ExecutionTypeLanggraph}
         else:
             valid_types = set()
 

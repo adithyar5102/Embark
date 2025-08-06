@@ -6,9 +6,9 @@ from mcp import StdioServerParameters, ClientSession, stdio_client
 from mcp.client.sse import sse_client
 
 from shared.langgraph.langgraph_agent import LangGraphAgent
-from core.llm.llm_provider_impl.langgraph_llm_config import LangGraphLLMProvider
+from core.llm.agent_llm_providers.llm_provider_impl.langgraph_llm_config import LangGraphLLMProvider
 from core.prompts.manager_prompt import REFLECTION_AGENT_PROMPT
-from modules.workflow_modules.workflow import LLM, Agent, Stdio, Tool, Workflow
+from models.workflow_models.workflow import LLM, Agent, Stdio, Tool, Workflow
 from services.workflow_executors.agent_executor import AgentExecutor
 
 from langgraph.prebuilt import create_react_agent

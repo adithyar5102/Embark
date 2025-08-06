@@ -5,9 +5,9 @@ from typing import Dict, List, Optional, Tuple, Union
 from shared.crewai.crewai_agent import CrewAIAgent
 from core.prompts.manager_prompt import REFLECTION_AGENT_GOAL, REFLECTION_AGENT_PROMPT
 from core.exception.workflow_execution_exception import InvalidProcessTypeException
-from core.llm.llm_provider_impl.crewai_llm_config import CrewAILLMProvider
-from modules.workflow_modules.workflow import ExecutionTypeCrewAI, Stdio, Tool, Workflow, LLM
-from modules.workflow_modules.workflow import Agent as WorkflowAgent
+from core.llm.agent_llm_providers.llm_provider_impl.crewai_llm_config import CrewAILLMProvider
+from models.workflow_models.workflow import ExecutionTypeCrewAI, Stdio, Tool, Workflow, LLM
+from models.workflow_models.workflow import Agent as WorkflowAgent
 from services.workflow_executors.agent_executor import AgentExecutor
 from crewai.tools.base_tool import BaseTool
 from crewai.agents.agent_builder.base_agent import BaseAgent

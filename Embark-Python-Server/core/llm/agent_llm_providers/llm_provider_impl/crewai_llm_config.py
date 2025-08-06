@@ -1,7 +1,7 @@
 
 from crewai import LLM
-from core.llm.llm_provider import LLMProvider
-from modules.workflow_modules.workflow import LLM as WorkflowLLM
+from core.llm.agent_llm_providers.llm_provider import LLMProvider
+from models.workflow_models.workflow import LLM as WorkflowLLM
 
 class CrewAILLMProvider(LLMProvider):
     def get_llm_instance(self, llm: WorkflowLLM = None):

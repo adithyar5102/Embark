@@ -1,10 +1,10 @@
 from typing import Any, Optional
 from core.exception.llm_config_exception import InvalidLLMProviderError
-from core.llm.llm_provider import LLMProvider
+from core.llm.agent_llm_providers.llm_provider import LLMProvider
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.models.anthropic import AnthropicChatCompletionClient
 from autogen_ext.models.ollama import OllamaChatCompletionClient
-from modules.workflow_modules.workflow import LLM
+from models.workflow_models.workflow import LLM
 
 class AutogenLLMProvider(LLMProvider):
 

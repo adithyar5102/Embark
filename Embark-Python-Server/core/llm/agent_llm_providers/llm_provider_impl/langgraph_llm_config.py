@@ -1,5 +1,5 @@
-from core.llm.llm_provider import LLMProvider
-from modules.workflow_modules.workflow import LLM
+from core.llm.agent_llm_providers.llm_provider import LLMProvider
+from models.workflow_models.workflow import LLM
 from langchain.chat_models import init_chat_model
 
 class LangGraphLLMProvider(LLMProvider):

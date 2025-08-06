@@ -9,7 +9,9 @@ from services.custom_workflow_executor.custom_workflow_implementation.crewai_exe
 from services.custom_workflow_executor.custom_workflow_implementation.langgraph_executor import LangGraphExecutor
 from shared.pydantic_model_creator import build_pydantic_model_from_dict
 from core.exception.workflow_execution_exception import CyclicWorkflowException, EntryPointNotFoundException
-from modules.workflow_modules.custom_workflow import CustomWorkflowAgentConfig
+from models.workflow_models.custom_workflow import CustomWorkflowAgentConfig
+from core.datastore.datastore import custom_workflow_status
+from models.status_models.status import WorkflowItem, WorkflowStatus
 
 class CustomWorkflowManager():
     def __init__(self, custom_workflows: List[CustomWorkflowAgentConfig]):
@@ -83,61 +85,75 @@ class CustomWorkflowManager():
         return child_workflow.agent_config.name, child_workflow.input_keys_required_from_parent
 
     async def execute_workflow(self, task: str, share_task_among_agents: bool = True):
-        if self.is_cyclic(self.start_node):
-            raise CyclicWorkflowException()
-        
-        flag = True
-        agent_input_message = task
-        current_node = self.start_node
-        result = None
-        loop_count = 0
-
-
-        while flag and loop_count <= self.node_count:
-
-            workflow_node_config:CustomWorkflowAgentConfig = self.agent_config_map[current_node]
-            agent = workflow_node_config.agent_config
-            executor = self.get_agent_execution_framework(workflow_node_config.agent_execution_framework)
-            pydantic_model = build_pydantic_model_from_dict(
-                name=agent.name,
-                data=workflow_node_config.structured_response_format
-            )
-
-            result:dict = await executor.execute(
-                agent=agent,
-                response_format=pydantic_model,
-                task_message=agent_input_message
-            )
-
-            # If no child then return result
-            if workflow_node_config.child_agent_names:
-                # Update the agent_message with input_keys_required_from_parent
-                child_name, input_keys = self.get_valid_child_name(
-                    result=result,
-                    child_agent_names=workflow_node_config.child_agent_names
-                )    
-                current_node = child_name
-            else:
-                flag = False
-                return result
+        try:
+            if self.is_cyclic(self.start_node):
+                raise CyclicWorkflowException()
             
-            # get the next node to invoke and gather data from result. If key is "" or None send entire response.
-            requested_messages_form_child = dict()
-            # check for the key value in the result
-            if input_keys:
-                for key in input_keys:
-                    if key in result.keys():
-                        requested_messages_form_child[key] = result[key]
-            
-            # if required input fields not present assign result
-            if share_task_among_agents:
-                agent_input_message = f"**Task**:\n{task}\n\n**Task Context:**\n"
-            else:
-                agent_input_message = "**Task Context:**\n"
+            flag = True
+            agent_input_message = task
+            current_node = self.start_node
+            result = None
+            loop_count = 0
 
-            if requested_messages_form_child:
-                agent_input_message += json.dumps(requested_messages_form_child)
-            else:
-                agent_input_message += json.dumps(result)
 
-            loop_count += 1
+            while flag and loop_count <= self.node_count:
+
+                custom_workflow_status.update_item(
+                    WorkflowItem(name=current_node, status=WorkflowStatus.RUNNING)
+                )
+
+                workflow_node_config:CustomWorkflowAgentConfig = self.agent_config_map[current_node]
+                agent = workflow_node_config.agent_config
+                executor = self.get_agent_execution_framework(workflow_node_config.agent_execution_framework)
+                pydantic_model = build_pydantic_model_from_dict(
+                    name=agent.name,
+                    data=workflow_node_config.structured_response_format
+                )
+
+                result:dict = await executor.execute(
+                    agent=agent,
+                    response_format=pydantic_model,
+                    task_message=agent_input_message
+                )
+
+                # If no child then return result
+                if workflow_node_config.child_agent_names:
+                    # Update the agent_message with input_keys_required_from_parent
+                    child_name, input_keys = self.get_valid_child_name(
+                        result=result,
+                        child_agent_names=workflow_node_config.child_agent_names
+                    )    
+                    current_node = child_name
+                else:
+                    flag = False
+                    return result
+                
+                # get the next node to invoke and gather data from result. If key is "" or None send entire response.
+                requested_messages_form_child = dict()
+                # check for the key value in the result
+                if input_keys:
+                    for key in input_keys:
+                        if key in result.keys():
+                            requested_messages_form_child[key] = result[key]
+                
+                # if required input fields not present assign result
+                if share_task_among_agents:
+                    agent_input_message = f"**Task**:\n{task}\n\n**Task Context:**\n"
+                else:
+                    agent_input_message = "**Task Context:**\n"
+
+                if requested_messages_form_child:
+                    agent_input_message += json.dumps(requested_messages_form_child)
+                else:
+                    agent_input_message += json.dumps(result)
+
+                loop_count += 1
+                
+                custom_workflow_status.update_item(
+                    WorkflowItem(name=current_node, status=WorkflowStatus.COMPLETED)
+                )
+        except Exception as e:
+            custom_workflow_status.update_item(
+                WorkflowItem(name=current_node, status=WorkflowStatus.FAILED)
+            )
+            raise HTTPException(status_code=500, detail=f"Custom workflow execution failed: {str(e)}")

@@ -1,8 +1,8 @@
 from typing import List, Optional
 from pydantic import BaseModel, model_validator
 
-from modules.workflow_modules.custom_workflow import CustomWorkflowAgentConfig
-from modules.workflow_modules.workflow import Workflow
+from models.workflow_models.custom_workflow import CustomWorkflowAgentConfig
+from models.workflow_models.workflow import Workflow
 
 """
 Example input:

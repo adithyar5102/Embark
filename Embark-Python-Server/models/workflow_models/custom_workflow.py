@@ -1,6 +1,6 @@
 from typing import List, Optional, Union, Any
 from pydantic import BaseModel, model_validator, ValidationError
-from modules.workflow_modules.workflow import Agent, AgentFrameworks
+from models.workflow_models.workflow import Agent, AgentFrameworks
 from shared.constants import VALID_TYPES
 
 """

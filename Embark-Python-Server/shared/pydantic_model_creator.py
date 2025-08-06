@@ -1,10 +1,7 @@
 from typing import Any, Dict, List, Union, get_args
 from pydantic import BaseModel, create_model
 import keyword
-
-
-# Example VALID_TYPES. Replace with actual import from shared.constants
-VALID_TYPES = {"string", "int", "float", "bool"}
+from shared.constants import VALID_TYPES
 
 # Mapping VALID_TYPES to Python types
 type_mapping = {

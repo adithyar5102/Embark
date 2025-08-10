@@ -51,4 +51,4 @@ class AsyncLiteLLMService(BaseLLMProvider):
             top_p=top_probability if top_probability is not None else None,
             max_tokens=max_tokens if max_tokens is not None else None,
         )
-        print(response.choices[0].message.content)
+        return response.choices[0].message.content

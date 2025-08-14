@@ -71,6 +71,7 @@ class BaseAgent(ABC):
 
                     await session_context.__aexit__()
                     await streams_context.__aexit__()
+                    await exit_stack.aclose()
 
 
             for tool in tools_result:

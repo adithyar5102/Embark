@@ -1,3 +1,4 @@
+import os
 from typing import Any, Optional
 from core.exception.llm_config_exception import InvalidLLMProviderError
 from core.llm.agent_llm_providers.llm_provider import LLMProvider
@@ -8,7 +9,7 @@ from models.workflow_models.workflow import LLM
 
 class AutogenLLMProvider(LLMProvider):
 
-    def get_openai_client(llm: LLM):
+    def get_openai_client(self, llm: LLM):
         return OpenAIChatCompletionClient(
             model=llm.model,
             temperature=llm.temperature,
@@ -16,7 +17,7 @@ class AutogenLLMProvider(LLMProvider):
             max_tokens=llm.max_tokens,
         )
 
-    def get_anthropic_client(llm: LLM):
+    def get_anthropic_client(self, llm: LLM):
         return AnthropicChatCompletionClient(
             model=llm.model,
             temperature=llm.temperature,
@@ -24,7 +25,7 @@ class AutogenLLMProvider(LLMProvider):
             max_tokens=llm.max_tokens,
         )
 
-    def get_ollama_client(llm: LLM):
+    def get_ollama_client(self, llm: LLM):
         return OllamaChatCompletionClient(
             model=llm.model,
             temperature=llm.temperature,
@@ -37,10 +38,10 @@ class AutogenLLMProvider(LLMProvider):
             return None
         match llm.provider.lower():
             case "openai" | "gemini" | "llama":
-                return self.get_openai_client(llm=llm)
+                return self.get_openai_client(llm)
             case "anthropic":
-                return self.get_anthropic_client(llm=llm)
+                return self.get_anthropic_client(llm)
             case "ollama":
-                return self.get_ollama_client(llm=llm)
+                return self.get_ollama_client(llm)
             case _:
                 raise InvalidLLMProviderError()

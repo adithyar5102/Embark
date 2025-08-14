@@ -16,7 +16,8 @@ from langgraph.prebuilt import create_react_agent
 class LangGraphExecutor(AgentExecutor):
     def __init__(self):
         self.langgraph_agent_instance = LangGraphAgent()
-    
+        raise NotImplementedError("LangGraphExecutor is not fully implemented yet.")
+
     async def initialize_reflection(self, manager_additional_instructions: Optional[str], llm: LLM, tools: List):
         manager_additional_instructions = f"\nInstructions:\n{manager_additional_instructions}\n" if manager_additional_instructions else ""
         return create_react_agent(

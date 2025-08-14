@@ -22,14 +22,14 @@ class CrewAIExecutor(AgentExecutor):
     async def initialize_reflection(self, task: str, manager_additional_instructions: Optional[str], llm: LLM):
         manager_additional_instructions = f"\nInstructions:\n{manager_additional_instructions}\n" if manager_additional_instructions else ""
         task_instructions = f"{manager_additional_instructions}\n**TASK**\n{task}\n"
-        reflection_instructions = Agent(
+        reflection_instructions = WorkflowAgent(
             name="reflection_agent",
             goal=REFLECTION_AGENT_GOAL,
             detailed_prompt=f"{REFLECTION_AGENT_PROMPT}\n{task_instructions}\n",
             agent_responsibility="",
             expected_output="",
             tools=[],
-            llm=None
+            llm=llm
         )
         return await self.crewai_agent_instance.register_agent(
             agent=reflection_instructions
@@ -50,7 +50,8 @@ class CrewAIExecutor(AgentExecutor):
 
             # Register the corresponding task
             task = await self.crewai_agent_instance.register_task(
-                agent_config
+                agent_config,
+                agent_instance
             )
             tasks.append(task)
 
@@ -58,21 +59,22 @@ class CrewAIExecutor(AgentExecutor):
 
     async def execute(self, workflow: Workflow, workflow_task: str):
 
-        agents, tasks = await self.get_agents_for_workflow(workflow)
-        reflection_agnet = await self.initialize_reflection(
+        agent_list, task_list = await self.get_agents_for_workflow(workflow)
+        reflection_agent_object = await self.initialize_reflection(
             task=workflow_task,
             manager_additional_instructions=workflow.reflection_additional_instruction,
+            llm=workflow.reflection_llm_config
         )
-        reflection_llm = CrewAILLMProvider().get_llm_instance(workflow.reflection_llm_config)
+        reflection_llm_object = CrewAILLMProvider().get_llm_instance(workflow.reflection_llm_config)
         
-        crew_ai_process_type = await self.crewai_agent_instance.get_process(workflow.execution_type)
+        selected_process_type = await self.crewai_agent_instance.get_process(workflow.execution_type)
 
         crew = await self.crewai_agent_instance.get_crew(
-            agents=agents,
-            tasks=tasks,
-            crew_ai_process_type=crew_ai_process_type,
-            manager_agent=reflection_agnet,
-            manager_llm=reflection_llm
+            agent_list,
+            task_list,
+            selected_process_type,
+            reflection_agent_object,
+            reflection_llm_object
         )
 
         # Create and run the crew

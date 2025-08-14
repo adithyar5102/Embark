@@ -22,10 +22,10 @@ class AutogenAgent(BaseAgent):
             model_client_stream=False,  # Enable streaming tokens from the model client.
         )    
     
-    def get_team(agents: List[AssistantAgent], execution_type: str):
+    def get_team(self, agents: List[AssistantAgent], execution_type: str):
         text_termination = TextMentionTermination("TERMINATE")
         match execution_type.lower():
-            case "round_robbin":
+            case "round_robin":
                 return RoundRobinGroupChat(agents, termination_condition=text_termination)
             case "selector_group_chat":
                 return SelectorGroupChat(agents, termination_condition=text_termination)

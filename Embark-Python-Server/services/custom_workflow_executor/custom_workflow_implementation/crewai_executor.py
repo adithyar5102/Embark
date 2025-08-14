@@ -14,8 +14,9 @@ class CrewAIExecutor(CustomAgentExecutor):
     async def execute(self, agent: Agent, response_format: Any, task_message: str):
         crew_ai_agent = await self.crew_ai_instance.register_agent(agent=agent)
         crew_ai_task = await self.crew_ai_instance.register_task(
-            agent=agent,
-            response_format=response_format
+            agent,
+            crew_ai_agent,
+            response_format
         )
         crew: Crew = await self.crew_ai_instance.get_crew(
             agents=[crew_ai_agent],

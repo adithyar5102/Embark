@@ -20,15 +20,17 @@ class CrewAIAgent(BaseAgent):
             backstory=agent.detailed_prompt,
             llm=CrewAILLMProvider().get_llm_instance(llm=agent.llm),
             verbose=False,
-            tools=await self.get_tools(agent.tools)
+            tools=await self.get_tools(agent.tools),
+            config=None
         )
 
-    async def register_task(self, agent: WorkflowAgent, response_format: Optional[Any] = None):
+    async def register_task(self, agent_config: WorkflowAgent, crew_ai_agent: Agent, response_format: Optional[Any] = None):
         return Task(
-            description=agent.agent_responsibility,
-            expected_output=agent.expected_output,
-            agent=agent,
-            output_pydantic=response_format
+            description=agent_config.agent_responsibility,
+            expected_output=agent_config.expected_output,
+            agent=crew_ai_agent,
+            output_pydantic=response_format,
+            config=None
         )
         
     
@@ -41,9 +43,9 @@ class CrewAIAgent(BaseAgent):
             case _:
                 raise InvalidProcessTypeException(process_type=process_type)
             
-    async def get_crew(agents:List[Agent], tasks:List[Task], crew_ai_process_type=None, manager_agent:Agent=None, manager_llm:LLM=None):
+    async def get_crew(self, crew_agents:List[Agent], tasks:List[Task], crew_ai_process_type=None, manager_agent:Agent=None, manager_llm:LLM=None):
         return Crew(
-            agents=agents,
+            agents=crew_agents,
             tasks=tasks,
             process=crew_ai_process_type,
             verbose=True,

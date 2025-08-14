@@ -52,6 +52,7 @@ async def execute_workflow(request: List[WorkflowModel]):
         )
         raise HTTPException(status_code=500, detail=f"Workflow execution failed: {str(e)}")
 
+
 @router.post("/custom-workflow/")
 async def test(request: CustomWorkflowConfig):
 

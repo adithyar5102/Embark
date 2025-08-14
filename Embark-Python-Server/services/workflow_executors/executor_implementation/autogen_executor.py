@@ -42,9 +42,12 @@ class AutogenExecutor(AgentExecutor):
             manager_additional_instructions=workflow.reflection_additional_instruction,
             llm=workflow.reflection_llm_config
         )
-        agents.extend(reflection_agent)
+        agents.append(reflection_agent)
 
-        team = self.autogen_agent_instance.get_team(workflow.execution_type)
+        team = self.autogen_agent_instance.get_team(
+            agents,
+            workflow.execution_type
+        )
 
         result = await team.run(task=workflow_task)
 

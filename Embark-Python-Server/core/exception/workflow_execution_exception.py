@@ -12,10 +12,10 @@ class InvalidProcessTypeException(Exception):
 class InvalidTeamTypeException(Exception):
     """
     Exception raised when an invalid team type is provided.
-    Valid types: 'round_robbin' or 'selector_group_chat'.
+    Valid types: 'round_robin' or 'selector_group_chat'.
     """
     def __init__(self, process_type: str):
-        super().__init__(f"Invalid process type: '{process_type}'. Must be 'round_robbin' or 'selector_group_chat'.")
+        super().__init__(f"Invalid process type: '{process_type}'. Must be 'round_robin' or 'selector_group_chat'.")
 
 class InvalidJsonResponse():
     def __init__(self, error_message: Optional[str] = None):

@@ -6,9 +6,9 @@ import type { WorkflowEdge, WorkflowNode, Workflow, workflowStatus } from './int
 import { useDispatch, useSelector } from 'react-redux';
 import { selectNodes, selectEdges, setNodes, setEdges, deleteNode, deleteEdge, selectWorkflow, } from '../store/workflowSlice';
 import { createNode, createEdge, addWorkflowInStore, updateNodeInStore } from './updateStore';
-import WorkflowInputForm from './WorkflowInputForm';
 import { Modal, Button as AntdButton } from 'antd';
 import 'antd/dist/reset.css';
+import WorkflowConfiguration from './WorkflowDataDisplay';
 
 export default function Workflow() {
   const navigate = useNavigate();
@@ -48,13 +48,15 @@ export default function Workflow() {
       const res = await fetch('http://localhost:8000/status/workflow');
       const data: workflowStatus[] = await res.json();
 
-      data.forEach(updateNode); // update each node
+      data.forEach(updateNode);
       console.log('Workflow status updated:', data);
 
       const allDone = data.every(
-        (status) => status.status === 'completed' || status.status === 'failed'
+        (s) => ['completed', 'failed'].includes(s.status.toLowerCase())
       );
+
       if (allDone) {
+        console.log("✅ All workflows completed. Stopping polling.");
         stopPolling();
       }
 
@@ -70,10 +72,10 @@ export default function Workflow() {
   };
 
   const startPolling = () => {
-    pollStatus(); // Initial fetch
+    stopPolling(); // make sure no duplicate intervals
+    pollStatus();  // initial fetch
     intervalRef.current = window.setInterval(pollStatus, 15000);
   };
-
   const stopPolling = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -81,44 +83,56 @@ export default function Workflow() {
     }
   };
 
-  // Helper: Validate a workflow and return missing fields
   function validateWorkflow(workflow: Workflow): string[] {
+    console.log('Validating workflow:', workflow);
     const missing: string[] = [];
-    if (!workflow.name) missing.push('name');
-    if (!workflow.description) missing.push('description');
-    if (!workflow.agent_execution_framework) missing.push('agent_execution_framework');
-    if (!workflow.execution_type) missing.push('execution_type');
-    if (!workflow.agents || workflow.agents.length === 0) missing.push('agents');
+
+    if (!workflow.name) missing.push("name");
+    if (!workflow.description) missing.push("description");
+    if (!workflow.agent_execution_framework) missing.push("agent_execution_framework");
+    if (!workflow.execution_type) missing.push("execution_type");
+    if (!workflow.agents || workflow.agents.length === 0) missing.push("agents");
+
     workflow.agents?.forEach((agent, idx) => {
       if (!agent.name) missing.push(`agent[${idx}].name`);
       if (!agent.goal) missing.push(`agent[${idx}].goal`);
       if (!agent.detailed_prompt) missing.push(`agent[${idx}].detailed_prompt`);
       if (!agent.agent_responsibility) missing.push(`agent[${idx}].agent_responsibility`);
       if (!agent.expected_output) missing.push(`agent[${idx}].expected_output`);
-      if (!agent.llm) missing.push(`agent[${idx}].llm`);
-      else {
+
+      if (!agent.llm) {
+        missing.push(`agent[${idx}].llm`);
+      } else {
         if (!agent.llm.model) missing.push(`agent[${idx}].llm.model`);
         if (!agent.llm.provider) missing.push(`agent[${idx}].llm.provider`);
         if (agent.llm.top_probability === undefined) missing.push(`agent[${idx}].llm.top_probability`);
         if (agent.llm.temperature === undefined) missing.push(`agent[${idx}].llm.temperature`);
         if (agent.llm.max_tokens === undefined) missing.push(`agent[${idx}].llm.max_tokens`);
       }
-      if (!agent.tools || agent.tools.length === 0) missing.push(`agent[${idx}].tools`);
-      agent.tools?.forEach((tool, tIdx) => {
-        if (!tool.name) missing.push(`agent[${idx}].tools[${tIdx}].name`);
-        if (!tool.connection) missing.push(`agent[${idx}].tools[${tIdx}].connection`);
-        else {
-          if ('command' in tool.connection) {
-            if (!tool.connection.command) missing.push(`agent[${idx}].tools[${tIdx}].connection.command`);
-            if (!Array.isArray(tool.connection.arguments)) missing.push(`agent[${idx}].tools[${tIdx}].connection.arguments`);
-          } else if ('connection_url' in tool.connection) {
-            if (!tool.connection.connection_url) missing.push(`agent[${idx}].tools[${tIdx}].connection.connection_url`);
+
+      // Tools are OPTIONAL — validate only if provided and not empty
+      if (Array.isArray(agent.tools) && agent.tools.length > 0) {
+        agent.tools.forEach((tool, tIdx) => {
+          if (!tool.name) missing.push(`agent[${idx}].tools[${tIdx}].name`);
+          if (!tool.connection) {
+            missing.push(`agent[${idx}].tools[${tIdx}].connection`);
+          } else {
+            if ("command" in tool.connection) {
+              if (!tool.connection.command) missing.push(`agent[${idx}].tools[${tIdx}].connection.command`);
+              if (!Array.isArray(tool.connection.arguments))
+                missing.push(`agent[${idx}].tools[${tIdx}].connection.arguments`);
+            } else if ("connection_url" in tool.connection) {
+              if (!tool.connection.connection_url)
+                missing.push(`agent[${idx}].tools[${tIdx}].connection.connection_url`);
+            }
           }
-        }
-      });
+        });
+      }
     });
+
     return missing;
   }
+
 
   const onAddNode = useCallback(
     (node: WorkflowNode) => {
@@ -308,6 +322,42 @@ export default function Workflow() {
     );
   }
 
+  const defaultWorkflow: Workflow = {
+    name: clickedWorkflow || "",
+    description: "",
+    agents: [
+      {
+        name: "",
+        goal: "",
+        detailed_prompt: "",
+        agent_responsibility: "",
+        expected_output: "",
+        stream_output: false,
+        tools: [],
+        llm: {
+          model: "",
+          provider: "",
+          top_probability: 0,
+          temperature: 0,
+          max_tokens: 0
+        }
+      }
+    ],
+    agent_execution_framework: "",
+    execution_type: "",
+    reflection_additional_instruction: "",
+    reflection_llm_config: {
+      model: "",
+      provider: "",
+      top_probability: 0,
+      temperature: 0,
+      max_tokens: 0
+    },
+    task: ""
+  };
+  const workflowFromStore = workflows.find(workflow => workflow.name === clickedWorkflow);
+
+
   useEffect(() => {
     return () => stopPolling(); // cleanup on unmount
   }, []);
@@ -385,7 +435,7 @@ export default function Workflow() {
         </div>
 
         <div className="w-1/2 p-6 overflow-auto">
-          <WorkflowInputForm onSave={handleOnWOrkflowSave} label={clickedWorkflow?.toString()} />
+          <WorkflowConfiguration onSave={handleOnWOrkflowSave} workflow={workflowFromStore ? workflowFromStore : defaultWorkflow} />
         </div>
       </div>
 
@@ -421,6 +471,7 @@ export default function Workflow() {
       >
         {modalContent}
       </Modal>
+
     </div>
   );
 }

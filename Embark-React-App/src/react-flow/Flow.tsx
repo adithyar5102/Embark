@@ -73,7 +73,7 @@ const getLayoutedElements = (
       ...node,
       targetPosition: isHorizontal ? 'left' : 'top',
       sourcePosition: isHorizontal ? 'right' : 'bottom',
-      width: 150,
+      width: 250,
       height: 50,
     })),
     edges: clonedEdges,

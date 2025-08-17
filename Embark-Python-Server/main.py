@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from api.workflow_router import router as workflow_router
 from fastapi.middleware.cors import CORSMiddleware
 from api.execution_status_router import execution_status_router
+from uvicorn import run as uvicorn_run
+from os import getenv as os_getenv, environ as os_environ
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI()
 
@@ -21,3 +25,12 @@ app.add_middleware(
 @app.get("/")
 async def home():
     return {"message": "API is up and running"}
+
+
+if __name__ == "__main__":
+    # SETUP THE ENV VARIABLES FOR LLM EXECUTION
+    gemini_key = os_getenv("GEMINI_API_KEY")
+    os_environ["GEMINI_API_KEY"] = gemini_key
+    os_environ["GOOGLE_API_KEY"] = gemini_key
+
+    uvicorn_run(app, port=8000)

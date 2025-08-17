@@ -5,7 +5,7 @@ from shared.constants import VALID_TYPES
 
 # Mapping VALID_TYPES to Python types
 type_mapping = {
-    "string": str,
+    "str": str,
     "int": int,
     "float": float,
     "bool": bool

@@ -52,10 +52,10 @@ class CustomWorkflowManager():
             match framework.lower():
                 case "autogen":
                     return AutogenExecutor()
-                case "lang_graph":
-                    return CrewAIExecutor()
-                case "crewai":
+                case "langgraph":
                     return LangGraphExecutor()
+                case "crewai":
+                    return CrewAIExecutor()
                 case _:
                     raise HTTPException(status_code=400, detail=f"Unsupported framework: {framework}")
         except Exception as e:

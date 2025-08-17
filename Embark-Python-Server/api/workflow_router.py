@@ -54,7 +54,7 @@ async def execute_workflow(request: List[WorkflowModel]):
 
 
 @router.post("/custom-workflow/")
-async def test(request: CustomWorkflowConfig):
+async def execute_custom_workflow(request: CustomWorkflowConfig):
 
 
     """

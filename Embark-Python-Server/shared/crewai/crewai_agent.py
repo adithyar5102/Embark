@@ -43,7 +43,7 @@ class CrewAIAgent(BaseAgent):
             case _:
                 raise InvalidProcessTypeException(process_type=process_type)
             
-    async def get_crew(self, crew_agents:List[Agent], tasks:List[Task], crew_ai_process_type=None, manager_agent:Agent=None, manager_llm:LLM=None):
+    async def get_crew(self, crew_agents:List[Agent], tasks:List[Task], crew_ai_process_type=Process.sequential, manager_agent:Agent=None, manager_llm:LLM=None):
         return Crew(
             agents=crew_agents,
             tasks=tasks,

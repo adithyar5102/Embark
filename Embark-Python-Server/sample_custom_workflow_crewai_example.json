@@ -1,0 +1,64 @@
+{
+  "workflows": [
+    {
+      "agent_config": {
+        "name": "start_node",
+        "goal": "Initiate the workflow and create an initial task context for testing.",
+        "detailed_prompt": "Generate a task context of approximately 50 words and set `call_end_node` to true to proceed to the next agent. `task_context` should be a simple story on puppy in 50 words.",
+        "agent_responsibility": "Start the process, get the required data and respond in json structure.",
+        "expected_output": "{call_end_node = true, task_context = str}",
+        "stream_output": false,
+        "tools": [],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "agent_execution_framework": "langgraph",
+      "is_entry_point": true,
+      "structured_response_format": {
+        "call_end_node": "bool",
+        "task_context": "str"
+      },
+      "child_agent_names": ["end_node"],
+      "parent_agent_names": [],
+      "agent_node_invoke_condition": {},
+      "input_keys_required_from_parent": []
+    },
+    {
+      "agent_config": {
+        "name": "end_node",
+        "goal": "testing the workflow",
+        "detailed_prompt": "Set `is_test_success` to true and assign `context_provided` with the provided data as task_context. If you find any information in content provided ensure to add it in `context_provided`",
+        "agent_responsibility": "Extract all the information provided in the input.",
+        "expected_output": "{'is_test_success': boolean, 'context_provided': str}",
+        "stream_output": false,
+        "tools": [],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1234
+        }
+      },
+      "agent_execution_framework": "langgraph",
+      "is_entry_point": false,
+      "structured_response_format": {
+        "is_test_success": "bool",
+        "context_provided": "str"
+      },
+      "child_agent_names": [],
+      "parent_agent_names": ["start_node"],
+      "agent_node_invoke_condition": {
+        "call_end_node": true
+      },
+      "input_keys_required_from_parent": ["task_context"]
+    }
+  ],
+  "task": "Testing the logical integration of a workflow by passing data between two nodes.",
+  "share_task_among_agents": false
+}

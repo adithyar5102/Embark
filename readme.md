@@ -4,6 +4,12 @@ A proof-of-concept project demonstrating the creation and execution of dynamic, 
 
 This project is a work in progress, showcasing an innovative approach to building scalable and efficient agentic systems. It highlights the capability to create agents and define complex workflows at runtime, allowing for dynamic decision-making and improved efficiency over traditional methods.
 
+### Landing Page
+<img src="images/UI_landing_page.png" alt="UI Landing Page"/>
+
+### Features
+<img src="images/workflow_automator_features.png" alt="Custom Workflow Executor Features" width="500"/>
+
 ## Features
 
 **1. Traditional Agentic Execution**
@@ -110,3 +116,29 @@ The application should now be running and accessible in your web browser.
 
 We welcome contributions! 🚀  
 If you believe in this feature and would like to help shape it into a full-fledged application, your ideas, improvements, and pull requests are always appreciated.
+
+# IMAGES
+
+## Custom Workflow Images
+
+### Custom Workflow Feature
+<img src="images/custom_workflow_executor_features.png" alt="Custom Workflow Executor Features" width="500"/>
+
+### Custom Workflow Example (Mermaid)
+<img src="images/custom_workflow_example_mermaid_diagram.png" alt="Custom Workflow Example Mermaid Diagram" width="500"/>
+
+### Custom Workflow Example (UI)
+<img src="images/UI_custom_workflow_example_execution.png" alt="UI Custom Workflow Example Execution"/>
+
+
+## Traditional Workflow Images
+
+### Traditional Workflow Example (Mermaid)
+<img src="images/traditional_workflow_example_mermaid_diagram.png" alt="Traditional Workflow Example Mermaid Diagram"/>
+
+### Traditional Workflow Feature
+<img src="images/traditional_workflow_executor_features.png" alt="Traditional Workflow Executor Features" width="500"/>
+
+### Traditional Workflow Builder (UI)
+<img src="images/UI_traditional_workflow_builder_executor.png" alt="UI Traditional Workflow Builder Executor"/>
+

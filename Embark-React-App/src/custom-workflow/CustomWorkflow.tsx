@@ -117,9 +117,7 @@ export default function CustomWorkflow() {
       }
 
       // Validate Tools
-      if (agent.tools === undefined || agent.tools === null || !Array.isArray(agent.tools) || agent.tools.length === 0) {
-        missing.push('agent_config.tools (at least one tool required)');
-      } else {
+      if (agent.tools && agent.tools.length > 0) {
         agent.tools.forEach((tool: Tool, tIdx: number) => {
           if (tool.name === undefined || tool.name === null || tool.name.trim() === '') missing.push(`agent_config.tools[${tIdx}].name`);
           if (tool.connection === undefined || tool.connection === null) {

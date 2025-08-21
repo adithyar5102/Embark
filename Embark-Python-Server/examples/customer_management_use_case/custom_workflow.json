@@ -1,0 +1,278 @@
+{
+  "workflows": [
+    {
+      "agent_config": {
+        "name": "start_node",
+        "goal": "User facing role",
+        "agent_responsibility": "Extracts and validates customer information and their request from the initial user query.",
+        "detailed_prompt": "Extract the details from the user request or query, such as the customer's name, product name, product model, and a description of the request. If any information is missing, specifically mention it as 'missing'.",
+        "expected_output": "{\"customer_name\":\"str\",\"product_name\":\"str\",\"product_model\":\"str\",\"user_request_description\":\"str\", \"is_insufficient_data\": \"bool\"}",
+        "stream_output": false,
+        "tools": [],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "agent_execution_framework": "crewai",
+      "is_entry_point": true,
+      "structured_response_format": {
+        "customer_name": "str",
+        "product_name": "str",
+        "product_model": "str",
+        "user_request_description": "str",
+        "is_insufficient_data": "bool"
+      },
+      "child_agent_names": ["insufficient_data_node", "products_details_extractor_node"],
+      "parent_agent_names": [],
+      "agent_node_invoke_condition": {},
+      "input_keys_required_from_parent": []
+    },
+    {
+      "agent_config": {
+        "name": "insufficient_data_node",
+        "goal": "Request for missing data",
+        "agent_responsibility": "Politely requests the user for any missing information required to proceed with their request.",
+        "detailed_prompt": "You are a customer-facing agent. Your task is to politely and clearly ask the user to provide the missing data identified in the previous step. Frame the request in a friendly and helpful manner.",
+        "expected_output": "{\"user_message\": \"str\"}",
+        "stream_output": false,
+        "tools": [],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "agent_execution_framework": "crewai",
+      "is_entry_point": false,
+      "structured_response_format": {
+        "user_message": "str"
+      },
+      "child_agent_names": [],
+      "parent_agent_names": ["start_node"],
+      "agent_node_invoke_condition": {
+        "is_insufficient_data": true
+      },
+      "input_keys_required_from_parent": [
+          "customer_name",
+          "product_name",
+          "product_model",
+          "user_request_description"
+      ]
+    },
+    {
+      "agent_config": {
+        "name": "products_details_extractor_node",
+        "goal": "Extract product purchase details",
+        "agent_responsibility": "Fetches product purchase and warranty details using specified tools to assist with issue resolution.",
+        "detailed_prompt": "Extract the product and purchase details for the specified product using the `get_product_purchase_details` tool. Concurrently, use the `get_warranty_details` tool to retrieve the warranty information for the same product. Summarize the findings for the next agent.",
+        "expected_output": "{\"user_request_description\": \"str\", \"product_purchase_detail_summary\": \"str\", \"product_warranty_details\": \"str\", \"customer_name\": \"str\"}",
+        "stream_output": false,
+        "tools":[
+          {
+              "name": "get_product_purchase_details",
+              "connection": {
+                  "connection_url": "http://localhost:8001/sse",
+                  "bearer_token": null
+              }
+          },
+          {
+              "name": "get_warranty_details",
+              "connection": {
+                  "connection_url": "http://localhost:8001/sse",
+                  "bearer_token": null
+              }
+          }
+        ],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "agent_execution_framework": "crewai",
+      "is_entry_point": false,
+      "structured_response_format": {
+        "user_request_description": "str",
+        "product_purchase_detail_summary": "str",
+        "product_warranty_details": "str",
+        "customer_name": "str"
+      },
+      "child_agent_names": ["issue_resolver_node"],
+      "parent_agent_names": ["start_node"],
+      "agent_node_invoke_condition": {},
+      "input_keys_required_from_parent": [
+          "customer_name",
+          "product_name",
+          "product_model",
+          "user_request_description"
+      ]
+    },
+    {
+      "agent_config": {
+        "name": "issue_resolver_node",
+        "goal": "Resolve the user facing issue",
+        "agent_responsibility": "Analyzes the user's issue and product details to determine the appropriate next step: assigning a service agent, providing self-service steps, or estimating repair costs.",
+        "detailed_prompt": "Analyze the user's issue and determine if it is covered under warranty. If it is, set `assign_service_agent` to `true`. If the issue is a manual error that can be resolved by the user, provide the necessary steps and set `close_issue` to `true`. If the issue is not covered under warranty, set `estimate_repair_cost` to `true`. Provide the steps in the `steps_to_resolve` field, using `NA` if not applicable.",
+        "expected_output": "{\"assign_service_agent\": \"bool\", \"close_issue\": \"bool\", \"estimate_repair_cost\": \"bool\", \"user_request_description\": \"str\", \"customer_name\": \"str\", \"steps_to_resolve\": \"str\"}",
+        "stream_output": false,
+        "tools": [],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "agent_execution_framework": "crewai",
+      "is_entry_point": false,
+      "structured_response_format": {
+        "assign_service_agent": "bool",
+        "close_issue": "bool",
+        "estimate_repair_cost": "bool",
+        "user_request_description": "str",
+        "customer_name": "str",
+        "steps_to_resolve": "str"
+      },
+      "child_agent_names": ["close_issue_node", "assign_service_agent_node", "estimate_repair_cost"],
+      "parent_agent_names": ["products_details_extractor_node"],
+      "agent_node_invoke_condition": {},
+      "input_keys_required_from_parent": [
+          "user_request_description",
+          "product_purchase_detail_summary",
+          "product_warranty_details",
+          "customer_name"
+      ]
+    },
+    {
+      "agent_config": {
+        "name": "close_issue_node",
+        "goal": "close the issue",
+        "agent_responsibility": "Provides the user with clear, step-by-step instructions to resolve their issue, leading to its closure.",
+        "detailed_prompt": "You are a customer-facing agent. You will be provided with a set of steps to resolve the user's issue. Your task is to format these steps into a clear, concise, and easy-to-follow response for the user, effectively closing the issue.",
+        "expected_output": "{\"user_message\": \"Steps to resolve the issue\"}",
+        "stream_output": false,
+        "tools": [],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "agent_execution_framework": "crewai",
+      "is_entry_point": false,
+      "structured_response_format": {
+        "user_message": "str"
+      },
+      "child_agent_names": [],
+      "parent_agent_names": ["issue_resolver_node"],
+      "agent_node_invoke_condition": {
+        "close_issue": true
+      },
+      "input_keys_required_from_parent": [
+          "user_request_description",
+          "customer_name",
+          "steps_to_resolve"
+      ]
+    },
+    {
+      "agent_config": {
+        "name": "assign_service_agent_node",
+        "goal": "raise service request",
+        "agent_responsibility": "Initiates a service request, Use tool `raise_service_request` to get the service request details and share it with the user.",
+        "detailed_prompt": "Call the `raise_service_request` which gives you the request_id send it to the user with polite message.",
+        "expected_output": "{\"response_with_service_request_details\": \"Assigned service agent request details with request id\"}",
+        "stream_output": false,
+        "tools":[
+          {
+              "name": "raise_service_request",
+              "connection": {
+                  "connection_url": "http://localhost:8001/sse",
+                  "bearer_token": null
+              }
+          }
+        ],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "agent_execution_framework": "crewai",
+      "is_entry_point": false,
+      "structured_response_format": {
+        "response_with_service_request_details": "str"
+      },
+      "child_agent_names": [],
+      "parent_agent_names": ["issue_resolver_node"],
+      "agent_node_invoke_condition": {
+        "assign_service_agent": true
+      },
+      "input_keys_required_from_parent": [
+          "user_request_description",
+          "customer_name"
+      ]
+    },
+    {
+      "agent_config": {
+        "name": "estimate_repair_cost",
+        "goal": "Get the estimated cost for the repair",
+        "agent_responsibility": "Calculates the total repair cost by summing up part and service costs and presents a transparent estimate to the user.",
+        "detailed_prompt": "You are a customer-facing agent. Your task is to use the `get_part_cost` tool for each part that needs to be replaced and the `get_service_cost` tool for labor charges. Sum these costs and construct a polite, clear, and transparent message for the user, detailing the estimated repair cost.",
+        "expected_output": "{\"user_message\": \"cost of estimation and reason for warranty decline\"}",
+        "stream_output": false,
+        "tools":[
+          {
+              "name": "get_part_cost",
+              "connection": {
+                  "connection_url": "http://localhost:8001/sse",
+                  "bearer_token": null
+              }
+          },
+          {
+              "name": "get_service_cost",
+              "connection": {
+                  "connection_url": "http://localhost:8001/sse",
+                  "bearer_token": null
+              }
+          }
+        ],
+        "llm": {
+          "model": "gemini-2.0-flash",
+          "provider": "gemini",
+          "top_probability": 1.0,
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "agent_execution_framework": "crewai",
+      "is_entry_point": false,
+      "structured_response_format": {
+        "user_message": "str"
+      },
+      "child_agent_names": [],
+      "parent_agent_names": ["issue_resolver_node"],
+      "agent_node_invoke_condition": {
+        "estimate_repair_cost": true
+      },
+      "input_keys_required_from_parent": [
+          "user_request_description",
+          "customer_name"
+      ]
+    }
+  ],
+  "task": "Hi, I'm John Doe. I purchased a model Apple16 pro model from you last month, and the screen is no longer working. I would like to get it fixed.",
+  "share_task_among_agents": false
+}

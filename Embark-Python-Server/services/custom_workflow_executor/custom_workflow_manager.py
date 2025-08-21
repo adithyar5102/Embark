@@ -116,6 +116,10 @@ class CustomWorkflowManager():
                     task_message=agent_input_message
                 )
 
+                custom_workflow_status.update_item(
+                    WorkflowItem(name=current_node, status=WorkflowStatus.COMPLETED)
+                )
+
                 # If no child then return result
                 if workflow_node_config.child_agent_names:
                     # Update the agent_message with input_keys_required_from_parent
@@ -148,10 +152,9 @@ class CustomWorkflowManager():
                     agent_input_message += json.dumps(result)
 
                 loop_count += 1
-                
-                custom_workflow_status.update_item(
-                    WorkflowItem(name=current_node, status=WorkflowStatus.COMPLETED)
-                )
+
+            executor.close_mcp_connection()
+
         except Exception as e:
             custom_workflow_status.update_item(
                 WorkflowItem(name=current_node, status=WorkflowStatus.FAILED)

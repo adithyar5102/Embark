@@ -13,11 +13,22 @@ from crewai.tools.base_tool import BaseTool
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from mcp import StdioServerParameters
 from crewai_tools import MCPServerAdapter
+from logging import getLogger
+
+logger = getLogger(__name__)
+
+# TODO Handle Multiple MCP for a agent
+server_params = {
+    "url": "http://localhost:8001/sse",
+    "transport": "sse"
+}
+
+adapter = MCPServerAdapter(server_params)
 
 class CrewAIExecutor(AgentExecutor):
 
     def __init__(self):
-        self.crewai_agent_instance = CrewAIAgent()
+        self.crewai_agent_instance = CrewAIAgent(adapter)
 
     async def initialize_reflection(self, task: str, manager_additional_instructions: Optional[str], llm: LLM):
         manager_additional_instructions = f"\nInstructions:\n{manager_additional_instructions}\n" if manager_additional_instructions else ""
@@ -78,6 +89,12 @@ class CrewAIExecutor(AgentExecutor):
         )
 
         # Create and run the crew
-        result = await crew.kickoff_async()
+        try:
+            result = await crew.kickoff_async()
+        except Exception as e:
+            logger.error(str(e))
+        finally:
+            if adapter:
+                adapter.stop()
 
         return result

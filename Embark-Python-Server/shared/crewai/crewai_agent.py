@@ -10,8 +10,28 @@ from mcp import StdioServerParameters, ClientSession, stdio_client
 from mcp.client.sse import sse_client
 from crewai_tools import MCPServerAdapter
 from shared.base_agent import BaseAgent
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CrewAIAgent(BaseAgent):
+
+    def __init__(self, mcp_adapter: MCPServerAdapter = None):
+        self.mcp_server_adapter:MCPServerAdapter = None
+        if mcp_adapter:
+            self.mcp_server_adapter = mcp_adapter
+        
+
+    async def get_tools(self, tools: Optional[List[Tool]] = None) -> List:
+        # TODO tool management Just for testing
+
+        try:
+            self.mcp_server_adapter.start()
+            mcp_tools = self.mcp_server_adapter.tools
+            print(f"Available tools (manual SSE): {[tool.name for tool in tools]}")
+            return mcp_tools
+        except Exception as e:
+            logger.error(str(e))
 
     async def register_agent(self, agent: WorkflowAgent):
         return Agent(
